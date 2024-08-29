@@ -1,75 +1,29 @@
-from typing import Callable
+from base_manager import BaseManager
 
-class By:
-    WIDTH = 1
-    HEIGHT = 2
-    AREA = 3
 
-class Objs:
+class Base:
 
-    def __init__(self):
-        self._rects = []
+    objects = None
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.objects = BaseManager(cls)
 
-    def _add(self, rect: "Rect"):
-        self._rects.append(rect)
+    def save(self):
+        self.objects._save(self)
 
-    def _get_rect_by_id(self, id: int):
-        for rect in self._rects:
-            if rect.id == id:
-                return rect
+    def __str__(self):
+        varss = vars(self)
+        varss = [f'{var}={varss[var]}' for var in varss]
+        str_vars = ', '.join(varss)
+        return f'{self.__class__.__name__}({str_vars})'
 
-    def remove(self, rect: "Rect" = None, id: int | None = None):
-        if isinstance(rect, Rect):
-            for rec in self._rects:
-                if rec.id == rect.id:
-                    self._rects.remove(rec)
-        elif isinstance(id, int):
-            rect = self._get_rect_by_id(id)
-            if rect is None:
-                raise ValueError(f'Nenhum Rect com id {id} foi encontrado.')
-                
 
-    def all(self):
-        return self._rects
+class Rect(Base):
     
-    def get(self, id: int | None = None, by: int | None = None, key: Callable | None = None):
-        if isinstance(id, int):
-            rect = self._get_rect_by_id(id)
-            if rect is None:
-                raise ValueError(f'Nenhum Rect com id {id} foi encontrado.')
-        elif callable(key):
-            funcs = {
-                By.WIDTH: lambda rect: rect.width,
-                By.HEIGHT: lambda rect: rect.height,
-                By.AREA: lambda rect: rect.area,
-            }
-            try:
-                key = funcs[by]
-            except ou
-            return key(self._rects, key=funcs[by])
-        
-    def filter(self, by: int, key: Callable | None = max):
-        if by == By.AREA:
-            return key(self._rects, key=lambda rect: rect.area)
-
-
-class Rect:
-    
-    objects = Objs()
-    _id_counter = 0
 
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.id = self._id_counter
-        Rect._id_counter += 1
-        self.objects._add(self)
-
-    def display(self):
-        print('-'*self.width)
-        for i in range(self.height):
-            print('|', ' '*(self.width-4), '|')
-        print('-'*self.width)
 
     @property
     def size(self):
@@ -79,19 +33,21 @@ class Rect:
     def area(self):
         return self.width * self.height
     
-    def __str__(self):
-        return f'Rect(ID = {self.id})'
     
 
-r1 = Rect(5, 4)
-r2 = Rect(10, 8)
-r3 = Rect(1,8)
-r4 = Rect(7,2)
+class Circle(Base):
 
-Rect.objects.remove(id = 2)
-menor_width = Rect.objects.get(by=By.AREA, key=max)
-maior_area = Rect.objects.filter(By.AREA)
+    def __init__(self, radius):
+        self.radius = radius
 
-print('\n', *Rect.objects.all())
-print(f'Menor largura: {menor_width}')
-print(f'Maior área: {maior_area}', '\n')
+    @property
+    def comprimento(self):
+        return 2 * 3.14 * self.radius
+
+    @property
+    def area(self):
+        return 3.14 * self.radius**2
+
+
+for rect in Rect.objects.all():
+    print(rect)
