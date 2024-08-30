@@ -1,91 +1,73 @@
 import sqlite3
+import inspect
 import os
-from typing import Callable, Literal, Union
-
+from typing import Any
 
 class BaseManager:
-
-    def __init__(self, obj_type, db_name: str = 'db.sqlite3'):
-        self.obj_type = obj_type
-        self.obj_name = self.obj_type.__name__
-        self.db_name = db_name.lower()
+    
+    def __init__(self, obj):
+        self.obj = obj
+        self.DATABASE = 'db.sqlite3'
         self._create_table()
 
     def _create_table(self):
-        with sqlite3.connect(self.db_name) as conn:
-            cursor = conn.cursor()
-            cursor.execute(f"""
-                    CREATE TABLE IF NOT EXISTS {self.obj_name} (
-                           id INTEGER PRIMARY KEY AUTOINCREMENT,
-                           width INTEGER,
-                           height INTEGER
-                           )
-        """)
-            conn.commit()
+        if not os.path.exists(self.DATABASE):
+            with open(self.DATABASE, 'w'):
+                pass
 
-    def _save(self, obj):
-        with sqlite3.connect(self.db_name) as conn:
+        with sqlite3.connect(self.DATABASE) as conn:
             cursor = conn.cursor()
-            varss = vars(obj)
-            colunas = ', '.join(varss.keys())
-            formated = ', '.join([str(var) for var in varss.values()])
-            comando = f"INSERT INTO {self.obj_name} ({colunas}) values ({formated})"
-            print(comando)
+            table = self.obj.__name__
+            parametros = inspect.signature(self.obj.__init__)
+            colunas = [col for col in parametros.parameters if col != 'self']
+            for i, col in enumerate(colunas):
+                colunas[i] += ' INTEGER'
+            colunas = ', '.join(colunas)
+            comando = f"CREATE TABLE IF NOT EXISTS {table} ( id INTEGER PRIMARY KEY AUTOINCREMENT, {colunas} );"
             cursor.execute(comando)
             conn.commit()
-            
 
-
-    def _get_rect_by_id(self, id: int):
-        for rect in self.objects:
-            if rect.id == id:
-                return rect
-
-    def remove(self, obj: Union["Rect", None] | None = None, id: int | None = None):
-        if isinstance(id, int):
-            obj = self._get_obj_by_id(id)
-            if obj is None:
-                raise ValueError(f'Nenhum Rect com id {id} foi encontrado.')
-        elif isinstance(self.obj_type, obj.__class__.__name__):
-            for rec in self.objects:
-                if rec.id == obj.id:
-                    self.objects.remove(rec)
-        
-                
+    def _save(self, vars: dict):
+        with sqlite3.connect('db.sqlite3') as conn:
+            cursor = conn.cursor()
+            items = vars.items()
+            colunas = [item[0] for item in items]
+            values = [item[1] for item in items]
+            colunas = ', '.join(colunas)
+            values = [str(v) for v in values]
+            values = ', '.join(values)
+            comando = F"INSERT INTO {self.obj.__name__} ({colunas}) values ({values});"
+            cursor.execute(comando)
+            conn.commit()
 
     def all(self):
-        with sqlite3.connect(self.db_name) as conn:
+        with sqlite3.connect(self.DATABASE) as conn:
             cursor = conn.cursor()
-            comando = f"SELECT * FROM {self.obj_name}"
-            cursor.execute(comando)
-            db_objs = cursor.fetchall()
-
-            # Remover ID
-            db_objs = [list(db_obj)[1:] for db_obj in db_objs]
-            objs = [self.obj_type(*obj) for obj in db_objs]
+            cursor.execute(f"SELECT * FROM {self.obj.__name__};")
+            db_data = cursor.fetchall()
+            db_data = [data[1:] for data in db_data]
+            objs = [self.obj(*data) for data in db_data]
             return objs
-    
-    def get(self, id: int | None = None, by: Literal['width', 'height', 'area'] | None = None, key: Callable | None = max):
-        if isinstance(id, int):
-            rect = self._get_rect_by_id(id)
-            if rect is None:
-                raise ValueError(f'Nenhum Rect com id {id} foi encontrado.')
-        elif callable(key):
-            funcs = {
-                'width': lambda rect: rect.width,
-                'height': lambda rect: rect.height,
-                'area': lambda rect: rect.area,
-            }
 
-            if by not in funcs:
-                raise ValueError(f'Valor inválido para by: {by}')
-            func = funcs[by]
+    def get(self, id: int, default: Any | None = 'raise'):
+        if isinstance(id, int):
             try:
-                rect = key(self.objects, key=func)
-            except Exception as e:
-                raise Exception(f'Erro: {e}')
-            return rect
-        
-    def filter(self, by: int, key: Callable | None = max):
-        if by == By.AREA:
-            return key(self.objects, key=lambda rect: rect.area)
+                with sqlite3.connect(self.DATABASE) as conn:
+                    cursor = conn.cursor()
+                    comando = f'SELECT * FROM {self.obj.__name__} WHERE id = {id};'
+                    cursor.execute(comando)
+                    db_data = cursor.fetchall()
+                    return self.obj(*db_data[0][1:])
+            except:
+                if default == 'raise':
+                    raise ValueError(f'{self.obj.__name__} com id {id} não foi encontrado.')
+                else:
+                    return default
+                
+    def delete(self, id: int):
+        if not isinstance(id, int):
+            raise ValueError(f'id precisa ser int')
+        with sqlite3.connect(self.DATABASE) as conn:
+            cursor = conn.cursor()
+            comando = f"DELETE * FROM {self.DATABASE} WHERE id = {id};"
+            print(comando)
