@@ -9,7 +9,7 @@ class Base:
         cls.objects = BaseManager(cls)
 
     def save(self):
-        self.objects._save(vars(self))
+        self.objects.create(vars(self))
 
     def __str__(self):
         varss = vars(self)

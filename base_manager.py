@@ -27,7 +27,11 @@ class BaseManager:
             cursor.execute(comando)
             conn.commit()
 
-    def _save(self, vars: dict):
+    def create(self, **kwargs):
+        try:
+            self.obj(*kwargs.values())
+        except:
+            raise ValueError(f'kwargs inválidos para {self.obj.__name__}')
         with sqlite3.connect('db.sqlite3') as conn:
             cursor = conn.cursor()
             items = vars.items()
@@ -63,6 +67,7 @@ class BaseManager:
                     raise ValueError(f'{self.obj.__name__} com id {id} não foi encontrado.')
                 else:
                     return default
+                
                 
     def delete(self, id: int):
         if not isinstance(id, int):

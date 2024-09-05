@@ -9,7 +9,7 @@ class Rect(Base):
 print('\n')
 
 Rect.objects.create(
-    width = 12,
+    widh = 12,
     height = 7
 )
 
