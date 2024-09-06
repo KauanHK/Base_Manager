@@ -28,7 +28,7 @@ class BaseManager:
             conn.commit()
 
     def _save(self, vars: dict):
-        vars = {key: str(value) for key, value in vars.items()}
+        vars = {key: f"'{value}'" for key, value in vars.items()}
         colunas = ', '.join(vars.keys())
         valores = ', '.join(vars.values())
         with sqlite3.connect(self.DATABASE) as conn:
@@ -38,7 +38,7 @@ class BaseManager:
             conn.commit()
 
     def create(self, **kwargs):
-        kwargs = {key: str(value) for key, value in kwargs.items()}
+        kwargs = {key: f"'{value}'" for key, value in kwargs.items()}
         with sqlite3.connect('db.sqlite3') as conn:
             cursor = conn.cursor()
             colunas = ', '.join(kwargs.keys())
@@ -56,30 +56,40 @@ class BaseManager:
             objs = [self.obj(*data) for data in db_data]
             return objs
 
-    def get(self, id: int, default: Any | None = 'raise'):
+    def get(self, id: int | None = None, raise_: bool = True, **kwargs):
         if isinstance(id, int):
-            try:
-                with sqlite3.connect(self.DATABASE) as conn:
-                    cursor = conn.cursor()
-                    comando = f'SELECT * FROM {self.obj.__name__} WHERE id = {id};'
-                    cursor.execute(comando)
-                    db_data = cursor.fetchall()
-                    return self.obj(*db_data[0][1:])
-            except:
-                if default == 'raise':
-                    raise ValueError(f'{self.obj.__name__} com id {id} não foi encontrado.')
-                else:
-                    return default
+            comando = f'SELECT * FROM {self.obj.__name__} WHERE id = {id};'
+
+        else:
+            condicoes = [f"{key} = '{value}'" for key, value in kwargs.items()]
+            condicoes = ' AND '.join(condicoes)
+            comando = f"SELECT * FROM {self.obj.__name__} WHERE {condicoes}"
+
+        try:
+            with sqlite3.connect(self.DATABASE) as conn:
+                cursor = conn.cursor()
+                cursor.execute(comando)
+                db_data = cursor.fetchall()
+                return self.obj(*db_data[0][1:])
+        except:
+            if raise_ == 'raise':
+                raise ValueError(f'{self.obj.__name__} com id {id} não foi encontrado.')
+            else:
+                return raise_
                 
                 
-    def delete(self, id: int | None = None, obj = None):
+    def delete(self, id: int | None = None, obj = None, **kwargs):
         if isinstance(id, int):
             comando = f"DELETE FROM {self.obj.__name__} WHERE id = {id};"
-        else:
+        elif obj is not None:
             items = vars(obj).items()
-            condicoes = [f'{key} = {value}' for key, value in items]
+            condicoes = [f"{key} = '{value}'" for key, value in items]
             condicoes = ' AND '.join(condicoes)
             comando = f"DELETE FROM {self.obj.__name__} WHERE {condicoes};"
+        else:
+            condicoes = [f"{key} = '{value}'" for key, value in kwargs.items()]
+            condicoes = ' AND '.join(condicoes)
+            comando = f"DELETE FROM {self.obj.__name__} WHERE {condicoes}"
 
         with sqlite3.connect(self.DATABASE) as conn:
             cursor = conn.cursor()

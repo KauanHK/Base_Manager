@@ -10,3 +10,9 @@ class Circulo(Base):
 
     def __init__(self, raio):
         self.raio = raio
+
+class Usuario(Base):
+
+    def __init__(self, nome, idade):
+        self.nome = nome
+        self.idade = idade
