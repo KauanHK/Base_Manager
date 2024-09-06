@@ -6,16 +6,7 @@ class Rect(Base):
         self.width = width
         self.height = height
 
-print('\n')
+class Circulo(Base):
 
-Rect.objects.create(
-    widh = 12,
-    height = 7
-)
-
-Rect.objects.delete(id=7)
-
-for rect in Rect.objects.all():
-    print(rect)
-
-print('\n')
+    def __init__(self, raio):
+        self.raio = raio

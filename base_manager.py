@@ -27,19 +27,22 @@ class BaseManager:
             cursor.execute(comando)
             conn.commit()
 
+    def _save(self, vars: dict):
+        vars = {key: str(value) for key, value in vars.items()}
+        colunas = ', '.join(vars.keys())
+        valores = ', '.join(vars.values())
+        with sqlite3.connect(self.DATABASE) as conn:
+            cursor = conn.cursor()
+            comando = F'INSERT INTO {self.obj.__name__} ({colunas}) values ({valores});'
+            cursor.execute(comando)
+            conn.commit()
+
     def create(self, **kwargs):
-        try:
-            self.obj(*kwargs.values())
-        except:
-            raise ValueError(f'kwargs inválidos para {self.obj.__name__}')
+        kwargs = {key: str(value) for key, value in kwargs.items()}
         with sqlite3.connect('db.sqlite3') as conn:
             cursor = conn.cursor()
-            items = vars.items()
-            colunas = [item[0] for item in items]
-            values = [item[1] for item in items]
-            colunas = ', '.join(colunas)
-            values = [str(v) for v in values]
-            values = ', '.join(values)
+            colunas = ', '.join(kwargs.keys())
+            values = ', '.join(kwargs.values())
             comando = F"INSERT INTO {self.obj.__name__} ({colunas}) values ({values});"
             cursor.execute(comando)
             conn.commit()
@@ -69,10 +72,16 @@ class BaseManager:
                     return default
                 
                 
-    def delete(self, id: int):
-        if not isinstance(id, int):
-            raise ValueError(f'id precisa ser int')
+    def delete(self, id: int | None = None, obj = None):
+        if isinstance(id, int):
+            comando = f"DELETE FROM {self.obj.__name__} WHERE id = {id};"
+        else:
+            items = vars(obj).items()
+            condicoes = [f'{key} = {value}' for key, value in items]
+            condicoes = ' AND '.join(condicoes)
+            comando = f"DELETE FROM {self.obj.__name__} WHERE {condicoes};"
+
         with sqlite3.connect(self.DATABASE) as conn:
             cursor = conn.cursor()
-            comando = f"DELETE * FROM {self.DATABASE} WHERE id = {id};"
-            print(comando)
+            cursor.execute(comando)
+            conn.commit()

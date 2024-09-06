@@ -9,10 +9,13 @@ class Base:
         cls.objects = BaseManager(cls)
 
     def save(self):
-        self.objects.create(vars(self))
+        varss = vars(self)
+        self.objects._save(varss)
+    
+    def delete(self):
+        self.objects.delete(obj=self)
 
     def __str__(self):
-        varss = vars(self)
-        str_vars = [f'{var} = {varss[var]}' for i, var in enumerate(varss)]
+        str_vars = [f'{var} = {value}' for var, value in vars(self).items()]
         str_vars = ', '.join(str_vars)
         return f'{self.__class__.__name__}({str_vars})'
