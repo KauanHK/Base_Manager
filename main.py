@@ -25,8 +25,5 @@ class Jogador(Base):
         self.gols = gols
 
 if __name__ == '__main__':
-
-    print(Jogador.objects.to_dataframe())
-
-    # for usuario in Jogador.objects.all():
-        # print(usuario)
+    for usuario in Jogador.objects.all():
+        print(usuario)
