@@ -1,16 +1,11 @@
 from base_manager import BaseManager
 
-
 class Base:
 
-    objects = None
-
-    def __init_subclass__(cls):
-        cls.objects = BaseManager(cls)
+    objects = BaseManager()
 
     def save(self):
-        varss = vars(self)
-        self.objects._save(varss)
+        self.objects.save(self)
     
     def delete(self):
         self.objects.delete(obj=self)

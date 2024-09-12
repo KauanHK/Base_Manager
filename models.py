@@ -1,4 +1,4 @@
-from base import Base
+from utils.base import Base
 
 class Rect(Base):
 
@@ -23,7 +23,4 @@ class Jogador(Base):
         self.nome = nome
         self.time = time
         self.gols = gols
-
-if __name__ == '__main__':
-    for usuario in Jogador.objects.all():
-        print(usuario)
+        

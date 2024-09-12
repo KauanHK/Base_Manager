@@ -1,36 +1,21 @@
 import sqlite3
 import pandas as pd
 import process
+from models import __dict__ as models
+from settings import DATABASE
 from typing import Any
 
 class BaseManager:
     
     '''Classe para gerenciamento de banco de dados SQL'''
 
-    def __init__(
-            self,
-            obj,
-            database: str = 'db.sqlite3'
-    ):
-        '''
-        Classe para gerenciamento de banco de dados SQL.
-        
-        Parâmetros
-        ------------
-            obj: A classe que contém os dados que serão armazenados
-            
-            database (str): Nome do arquivo sqlite3
-
-        '''
-        self.obj = obj
-        self.database = database
-        process._create_table(self.database, self.obj)
-
-
+    def __init__(self):
+        for table in models:
+            process._create_table(table)
 
     def create(self, **kwargs):
         kwargs = {key: f"'{value}'" for key, value in kwargs.items()}
-        with sqlite3.connect('db.sqlite3') as conn:
+        with sqlite3.connect(DATABASE) as conn:
             cursor = conn.cursor()
             colunas = ', '.join(kwargs.keys())
             values = ', '.join(kwargs.values())
@@ -39,7 +24,7 @@ class BaseManager:
             conn.commit()
 
     def all(self):
-        with sqlite3.connect(self.database) as conn:
+        with sqlite3.connect() as conn:
             cursor = conn.cursor()
             cursor.execute(f"SELECT * FROM {self.obj.__name__};")
             db_data = cursor.fetchall()
@@ -64,6 +49,16 @@ class BaseManager:
     def filter(self, **kwargs):
         condicoes = process._condicoes(kwargs)
         return process._filter(self.database, self.obj, condicoes)
+    
+    def save(self, obj: object):
+        vars = {key: f"'{value}'" for key, value in vars(obj).items()}
+        colunas = ', '.join(vars.keys())
+        valores = ', '.join(vars.values())
+        with sqlite3.connect(self.database) as conn:
+            cursor = conn.cursor()
+            comando = F'INSERT INTO {obj.__name__} ({colunas}) values ({valores});'
+            cursor.execute(comando)
+            conn.commit()
         
     def delete(self, id: int | None = None, obj = None, **kwargs):
         if isinstance(id, int):
