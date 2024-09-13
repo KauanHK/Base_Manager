@@ -1,17 +1,14 @@
 import sqlite3
 import pandas as pd
 import process
-from models import __dict__ as models
 from settings import DATABASE
-from typing import Any
 
 class BaseManager:
     
     '''Classe para gerenciamento de banco de dados SQL'''
 
-    def __init__(self):
-        for table in models:
-            process._create_table(table)
+    def __init__(self, obj: object):
+        self.obj = obj
 
     def create(self, **kwargs):
         kwargs = {key: f"'{value}'" for key, value in kwargs.items()}

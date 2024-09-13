@@ -1,1 +1,2 @@
+
 DATABASE = 'db.sqlite3'

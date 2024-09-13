@@ -1,8 +1,8 @@
 import sqlite3
 import inspect
 import os
-
 from settings import DATABASE
+
 
 def _colunas(obj: object):
     '''Retorna '''

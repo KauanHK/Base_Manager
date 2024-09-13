@@ -2,7 +2,9 @@ from base_manager import BaseManager
 
 class Base:
 
-    objects = BaseManager()
+    def __init_subclass__(cls):
+        print(cls)
+        cls.objects = BaseManager(cls)
 
     def save(self):
         self.objects.save(self)
